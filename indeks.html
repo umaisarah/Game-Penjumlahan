@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260707-05-f6eb95b"}');</script>
+  <script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latihan Penjumlahan</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+        body { font-family: 'Fira Sans', sans-serif; }
+        .pop { animation: pop .3s ease; }
+        @keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+  <script src="/_sdk/0179d719c431a79e.data_sdk.js" type="text/javascript" integrity="sha512-OsRvJkI5GkC3MJQcgotQYotpzrMSX415GiKKgvYdxQEEkzD/fdchShO2FMSy0PJr/tiINMXOk5Vl2zAgg6bUiA=="></script>
+  <script src="/_sdk/0b3af1c300e720aa.resizing_sdk.js" type="text/javascript" integrity="sha512-nX1P6oXZmEY5wCI2lUVg3BwKu1cr0yi+ZpXgZ0Yn90vkSwvpmyzBMvOyD6VLJUtBwFI2dSrw1b6OvORxSggw3w=="></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full flex flex-col items-center px-4 py-8">
+  <header data-template-id="header-section" class="canva-header w-full max-w-lg text-center mb-6">
+   <h1 data-template-id="app-title" class="canva-text font-bold"></h1>
+   <p data-template-id="app-subtitle" class="canva-text mt-1"></p>
+  </header>
+  <main class="w-full max-w-lg flex flex-col gap-5">
+   <section data-template-id="score-panel" class="canva-panel rounded-2xl px-5 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-2"><i data-lucide="trophy" style="width:20px;height:20px;"></i> <span data-template-id="score-label" class="canva-text font-medium"></span>
+    </div>
+    <div class="flex items-center gap-4"><span class="flex items-center gap-1 font-bold text-green-700"><i data-lucide="check" style="width:18px;height:18px;"></i><span id="score-correct">0</span></span> <span class="flex items-center gap-1 font-bold text-rose-600"><i data-lucide="x" style="width:18px;height:18px;"></i><span id="score-wrong">0</span></span>
+    </div>
+   </section>
+   <section data-template-id="question-card" class="canva-card rounded-3xl px-6 py-8 shadow-xl text-center">
+    <p id="question-text" class="font-bold text-4xl text-slate-800 mb-6 pop">— + — = ?</p><label data-template-id="answer-label" for="answer-input" class="canva-text block text-left font-medium mb-2"></label> <input id="answer-input" type="number" inputmode="numeric" class="canva-input w-full text-center text-2xl font-bold rounded-xl border-2 border-slate-200 focus:border-orange-400 focus:outline-none py-3 mb-2 text-slate-800">
+    <div id="feedback-slot" class="min-h-[28px] mb-3"><span data-template-id="feedback-correct" class="canva-text hidden font-semibold" aria-live="polite"></span> <span data-template-id="feedback-wrong" class="canva-text hidden font-semibold" aria-live="polite"></span>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3"><button data-template-id="check-button" type="button" onclick="checkAnswer()" class="canva-button flex-1 rounded-xl py-3 font-semibold shadow transition hover:opacity-90"></button> <button data-template-id="next-button" type="button" onclick="nextQuestion()" class="canva-button flex-1 rounded-xl py-3 font-semibold shadow transition hover:opacity-90 hidden"></button>
+    </div>
+   </section><button data-template-id="reset-button" type="button" onclick="resetScore()" class="canva-button self-center rounded-xl px-5 py-2 font-medium shadow-sm transition hover:opacity-90"></button>
+   <p data-template-id="footer-note" class="canva-text text-center text-sm"></p>
+  </main>
+  <script src="/_sdk/e063511df281944a.editing_sdk.js" integrity="sha512-Xa8p4aPfoMxVnzxQE2WAG0FfoaPLxdjOJMfUZGm1yZosJTYmnNDvgLkJ2EoN0i3zxjeQVAzUMSXNvTKQVqbXyQ=="></script>
+  <script>
+        let a = 0, b = 0, correct = 0, wrong = 0, answered = false;
+
+        const qText = document.getElementById('question-text');
+        const input = document.getElementById('answer-input');
+        const fbCorrect = document.querySelector('[data-template-id="feedback-correct"]');
+        const fbWrong = document.querySelector('[data-template-id="feedback-wrong"]');
+        const nextBtn = document.querySelector('[data-template-id="next-button"]');
+        const checkBtn = document.querySelector('[data-template-id="check-button"]');
+
+        // --- SISTEM SUARA (WEB AUDIO API) ---
+        let audioCtx;
+        function playSound(isCorrect) {
+            // Inisialisasi AudioContext pada interaksi pertama pengguna untuk menghindari pemblokiran browser
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (isCorrect) {
+                // Suara Benar (Nada tinggi, gelombang 'sine')
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            } else {
+                // Suara Salah (Nada rendah/dengung, gelombang 'sawtooth')
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            }
+
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+        // ------------------------------------
+
+        function rand(n) { return Math.floor(Math.random() * n) + 1; }
+
+        function newQuestion() {
+            a = rand(20);
+            b = rand(20);
+            qText.textContent = a + ' + ' + b + ' = ?';
+            qText.classList.remove('pop');
+            void qText.offsetWidth;
+            qText.classList.add('pop');
+        }
+
+        function hideFeedback() {
+            fbCorrect.classList.add('hidden');
+            fbWrong.classList.add('hidden');
+        }
+
+        function checkAnswer() {
+            const val = input.value.trim();
+            if (val === '') return;
+            hideFeedback();
+            
+            if (parseInt(val, 10) === a + b) {
+                playSound(true); // Putar suara benar
+                correct++;
+                document.getElementById('score-correct').textContent = correct;
+                fbCorrect.classList.remove('hidden');
+                answered = true;
+                nextBtn.classList.remove('hidden');
+                checkBtn.classList.add('hidden');
+                input.disabled = true;
+            } else {
+                playSound(false); // Putar suara salah
+                wrong++;
+                document.getElementById('score-wrong').textContent = wrong;
+                fbWrong.classList.remove('hidden');
+                input.select();
+            }
+        }
+
+        function nextQuestion() {
+            hideFeedback();
+            input.value = '';
+            input.disabled = false;
+            answered = false;
+            nextBtn.classList.add('hidden');
+            checkBtn.classList.remove('hidden');
+            newQuestion();
+            input.focus();
+        }
+
+        function resetScore() {
+            correct = 0; wrong = 0;
+            document.getElementById('score-correct').textContent = '0';
+            document.getElementById('score-wrong').textContent = '0';
+            nextQuestion();
+        }
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (answered) nextQuestion(); else checkAnswer();
+            }
+        });
+
+        newQuestion();
+        lucide.createIcons();
+    </script>
+ </body>
+</html>
